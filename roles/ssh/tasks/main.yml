@@ -1,0 +1,8 @@
+---
+- name: Add supplied public key to the existing user
+  ansible.posix.authorized_key:
+    user: "{{ ssh_user }}"
+    key: "{{ lookup('ansible.builtin.file', ssh_public_key_file) }}"
+    state: present
+    exclusive: false
+    manage_dir: true
