@@ -1,0 +1,9 @@
+---
+# Override with -e @local.yml; do not put passwords here.
+base_upgrade_packages: true
+nginx_port: 8080
+nginx_server_name: _
+app_root: /var/www/ansible-lab-portal
+app_archive: "{{ playbook_dir }}/files/lab-portal.tar.gz"
+ssh_user: julia
+ssh_public_key_file: "{{ lookup('ansible.builtin.env', 'HOME') }}/.ssh/id_ed25519.pub"
