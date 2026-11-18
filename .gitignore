@@ -1,0 +1,7 @@
+.venv/
+local.yml
+*.retry
+__pycache__/
+*.pem
+id_ed25519*
+id_rsa*
