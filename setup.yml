@@ -1,0 +1,28 @@
+---
+- name: Configure the Ubuntu lab server
+  hosts: webservers
+  become: true
+  gather_facts: true
+  pre_tasks:
+    - name: Require Ubuntu 24.04
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.distribution == 'Ubuntu'
+          - ansible_facts.distribution_version == '24.04'
+        fail_msg: This project targets Ubuntu 24.04 with systemd and an existing sudo user.
+      tags: [always]
+    - name: Check supplied public key before making changes
+      ansible.builtin.assert:
+        that:
+          - lookup('ansible.builtin.file', ssh_public_key_file) is match('^(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp[0-9]+) ')
+        fail_msg: Supply a real OpenSSH public key file on the controller, never a private key.
+      tags: [ssh]
+  roles:
+    - role: base
+      tags: [base]
+    - role: nginx
+      tags: [nginx]
+    - role: app
+      tags: [app]
+    - role: ssh
+      tags: [ssh]
