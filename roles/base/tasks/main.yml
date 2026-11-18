@@ -1,0 +1,41 @@
+---
+- name: Refresh package metadata
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+- name: Apply available safe package upgrades
+  ansible.builtin.apt:
+    upgrade: safe
+  when: base_upgrade_packages | bool
+- name: Install server utilities and fail2ban
+  ansible.builtin.apt:
+    name: [curl, ca-certificates, git, rsync, unzip, tar, fail2ban, python3-systemd]
+    state: present
+- name: Configure SSH protection using the system journal
+  ansible.builtin.copy:
+    dest: /etc/fail2ban/jail.d/ansible-lab.local
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      [sshd]
+      enabled = true
+      backend = systemd
+      port = ssh
+      maxretry = 5
+      findtime = 10m
+      bantime = 10m
+  notify: Restart fail2ban
+- name: Enable fail2ban
+  ansible.builtin.systemd_service:
+    name: fail2ban
+    enabled: true
+    state: started
+- name: Check whether a reboot is required
+  ansible.builtin.stat:
+    path: /var/run/reboot-required
+  register: reboot_required
+- name: Report pending reboot without rebooting automatically
+  ansible.builtin.debug:
+    msg: Package updates require a reboot. Schedule it separately.
+  when: reboot_required.stat.exists
