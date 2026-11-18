@@ -1,0 +1,35 @@
+---
+- name: Install Nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+- name: Validate lab HTTP port
+  ansible.builtin.assert:
+    that:
+      - nginx_port | int >= 1024
+      - nginx_port | int <= 65535
+- name: Install dedicated Nginx site
+  ansible.builtin.template:
+    src: lab-portal.conf.j2
+    dest: /etc/nginx/sites-available/ansible-lab-portal.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload validated Nginx
+- name: Enable dedicated site without removing existing sites
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/ansible-lab-portal.conf
+    dest: /etc/nginx/sites-enabled/ansible-lab-portal.conf
+    state: link
+  notify: Reload validated Nginx
+- name: Check complete Nginx configuration
+  ansible.builtin.command: nginx -t
+  changed_when: false
+  when: not ansible_check_mode
+- name: Enable Nginx
+  ansible.builtin.systemd_service:
+    name: nginx
+    enabled: true
+    state: started
